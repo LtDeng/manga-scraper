@@ -9,7 +9,7 @@ from image_scraper.services.pdf import PdfCompiler
 class ScraperBot:
     def __init__(self, config: ScraperConfig):
         self.config = config
-        self.store = ImageStore(config.output_dir)
+        self.store = ImageStore(config.output_dir / self.config.target_url.rpartition('/')[-1].replace("-", "_"))
         self.interceptor = ImageInterceptor(config, config.output_dir)
         self.pdf = PdfCompiler()
 
@@ -20,7 +20,8 @@ class ScraperBot:
             self._scroll(page)
 
         images = self.store.list_images()
-        self.pdf.compile(images, self.config.output_dir.parent / self.config.pdf_name)
+        pdf_name = self.config.target_url.rpartition('/')[-1].replace("-", "_")+".pdf"
+        self.pdf.compile(images, self.config.output_dir.parent / pdf_name)
 
     def _scroll(self, page) -> None:
         for _ in range(self.config.scroll_iterations):

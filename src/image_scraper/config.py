@@ -14,5 +14,6 @@ class ScraperConfig:
     scroll_iterations: int = 25
     scroll_delay: float = 0.25
 
+    allowed_source: str = "https://cdn.readdetectiveconan.com"
     allowed_image_types: Tuple[str, ...] = ("image/jpeg", "image/png", "image/webp")
     min_image_size_bytes: int = 20_000
