@@ -12,7 +12,8 @@ COPY src ./src
 # Ensure imports work
 ENV PYTHONPATH=/app/src
 
-# Optional: create output dir (avoids runtime issues)
+# Create output directory
 RUN mkdir -p /app/output/images
 
-CMD ["python", "-m", "image_scraper.main"]
+# Entry point: always run your module
+ENTRYPOINT ["python", "-m", "image_scraper.main"]
