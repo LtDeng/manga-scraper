@@ -4,6 +4,8 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    curl \
+    docker.io \
     libasound2 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
@@ -25,7 +27,6 @@ RUN apt-get update && apt-get install -y \
     libxfixes3 \
     libxkbcommon0 \
     libxrandr2 \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -36,7 +37,12 @@ RUN playwright install chromium
 COPY src ./src
 
 ENV PYTHONPATH=/app/src
+ENV LIBRARY_ROOT=/app/library
+ENV KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest
+ENV KCC_EXECUTABLE=""
+ENV KCC_DOCKER_PLATFORM=""
+ENV KCC_FLAGS="--format EPUB --nokepub --manga-style"
 
-RUN mkdir -p /app/output/images
+RUN mkdir -p /app/library
 
 CMD ["uvicorn", "image_scraper.api:app", "--host", "0.0.0.0", "--port", "8000"]
