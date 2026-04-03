@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse
 from image_scraper.library import compute_paths, ensure_layout, list_chapters, write_chapter_metadata, write_series_metadata
 from image_scraper.models import ScrapeConvertRequest, ScrapeConvertResponse
 from image_scraper.services.cover import fetch_cover
+from image_scraper.services.epub_metadata import apply_epub_metadata
 from image_scraper.services.kcc import KccError, convert_with_kcc
 from image_scraper.services.scrape import scrape_chapter_images
 
@@ -31,11 +32,15 @@ def health():
 def scrape_and_convert(req: ScrapeConvertRequest):
     paths = compute_paths(req)
     ensure_layout(paths)
+    existing_cover = paths.cover_path.exists()
 
     if paths.epub_path.exists() and not req.overwrite:
+        write_series_metadata(req, paths, existing_cover)
+        write_chapter_metadata(req, paths, len(list(paths.chapter_images_dir.glob("*"))))
         return ScrapeConvertResponse(
             status="ok",
             series_slug=paths.series_slug,
+            chapter_label=paths.chapter_label,
             chapter_slug=paths.chapter_slug,
             chapter_sort_key=paths.chapter_sort_key,
             image_count=len(list(paths.chapter_images_dir.glob("*"))),
@@ -53,7 +58,7 @@ def scrape_and_convert(req: ScrapeConvertRequest):
             if image.is_file():
                 image.unlink()
 
-    cover_saved = False
+    cover_saved = existing_cover
     if req.cover_image_url:
         cover_saved = fetch_cover(str(req.cover_image_url), paths.cover_path)
 
@@ -67,6 +72,7 @@ def scrape_and_convert(req: ScrapeConvertRequest):
 
     try:
         convert_with_kcc(paths.chapter_images_dir, paths.epub_dir, paths.epub_filename)
+        apply_epub_metadata(paths.epub_path, req)
     except KccError as exc:
         logger.exception("KCC conversion failed for chapter %s: %s", paths.chapter_key, exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -80,6 +86,7 @@ def scrape_and_convert(req: ScrapeConvertRequest):
     return ScrapeConvertResponse(
         status="ok",
         series_slug=paths.series_slug,
+        chapter_label=paths.chapter_label,
         chapter_slug=paths.chapter_slug,
         chapter_sort_key=paths.chapter_sort_key,
         image_count=image_count,

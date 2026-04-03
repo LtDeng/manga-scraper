@@ -24,7 +24,7 @@ def test_health_endpoint_returns_ok(tmp_path):
 
 def test_get_epub_file_returns_epub_from_library(tmp_path):
     client = _client_with_library_root(tmp_path)
-    epub_file = tmp_path / "series" / "one-piece" / "epub" / "one-piece__1173__chapter-1173.epub"
+    epub_file = tmp_path / "series" / "one-piece" / "epub" / "one-piece_chapter_1173.epub"
     epub_file.parent.mkdir(parents=True, exist_ok=True)
     epub_file.write_bytes(b"epub-bytes")
 
@@ -55,9 +55,9 @@ def test_get_epub_file_not_found_returns_404(tmp_path):
 
 def test_get_series_chapters_returns_chapter_metadata_list(tmp_path):
     client = _client_with_library_root(tmp_path)
-    chapter_dir = tmp_path / "series" / "one-piece" / "chapters" / "1173__chapter-1173"
+    chapter_dir = tmp_path / "series" / "one-piece" / "chapters" / "1173"
     chapter_dir.mkdir(parents=True, exist_ok=True)
-    chapter_payload = {"chapter_key": "1173__chapter-1173", "chapter_number": "1173"}
+    chapter_payload = {"chapter_key": "1173", "chapter_number": "1173", "chapter_label": "1173"}
     (chapter_dir / "chapter.json").write_text(json.dumps(chapter_payload), encoding="utf-8")
 
     response = client.get("/series/one-piece/chapters")
@@ -77,7 +77,7 @@ def test_get_series_chapters_missing_series_returns_404(tmp_path):
 
 def test_get_chapter_returns_json_payload(tmp_path):
     client = _client_with_library_root(tmp_path)
-    chapter_key = "1173__chapter-1173"
+    chapter_key = "1173"
     chapter_dir = tmp_path / "series" / "one-piece" / "chapters" / chapter_key
     chapter_dir.mkdir(parents=True, exist_ok=True)
     chapter_payload = {"chapter_key": chapter_key, "image_count": 16}
@@ -92,7 +92,7 @@ def test_get_chapter_returns_json_payload(tmp_path):
 def test_get_chapter_missing_file_returns_404(tmp_path):
     client = _client_with_library_root(tmp_path)
 
-    response = client.get("/series/one-piece/chapters/1173__chapter-1173")
+    response = client.get("/series/one-piece/chapters/1173")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Chapter not found"
