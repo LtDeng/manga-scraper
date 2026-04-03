@@ -79,23 +79,16 @@ Serves only EPUB files from the managed library path and blocks path traversal.
 curl -X POST http://localhost:8000/scrape-and-convert \
   -H 'Content-Type: application/json' \
   -d '{
-    "target_url": "https://reader.example.com/series/demo/chapter-12-5",
-    "series_name": "Demo Series",
-    "series_sort_name": "Demo Series",
-    "series_id": "ext-123",
-    "volume": "3",
-    "chapter_number": "12.5",
-    "chapter_title": "A New Dawn",
-    "chapter_id": "ch-12-5",
-    "author": "Jane Doe",
-    "publisher": "Manga House",
+    "target_url": "https://mangapill.com/chapters/2-11173000/one-piece-chapter-1173",
+    "series_name": "One Piece",
+    "series_sort_name": "one_piece",
+    "chapter_number": "1173",
+    "chapter_id": "ch-1173",
+    "author": "Eiichiro Oda",
+    "publisher": "Shueisha",
     "language": "en",
-    "description": "Chapter description",
-    "tags": ["action", "fantasy"],
-    "cover_image_url": "https://example.com/cover.jpg",
-    "overwrite": false,
-    "cleanup_images_after_epub": false,
-    "fetch_existing_only": false
+    "output_root": "./library",
+    "cover_image_url": "https://cdn11.bigcommerce.com/s-zkx5lhzlf8/images/stencil/1500x1500/products/1524988/8643666/9781569319017__87729.1743235474.jpg?c=1?imbypass=on"
   }'
 ```
 
@@ -130,22 +123,43 @@ docker run --rm -p 8000:8000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/library:/app/library \
   -e LIBRARY_ROOT=/app/library \
-  -e KCC_DOCKER_IMAGE=ciromattia/kcc:latest \
-  -e KCC_EXECUTABLE=kcc-c2e \
-  -e KCC_FLAGS='--profile=KPW --manga-style' \
+  -e KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest \
+  -e KCC_EXECUTABLE='' \
+  -e KCC_DOCKER_PLATFORM='' \
+  -e KCC_FLAGS='--format EPUB --nokepub --manga-style' \
   manga-scraper
+```
+
+For ARM hosts (Raspberry Pi / Jetson), if KCC image architecture detection is problematic, set:
+
+```bash
+-e KCC_DOCKER_PLATFORM=linux/arm64
+```
+
+## Multi-arch build (recommended for server deploy)
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t your-registry/manga-scraper:latest \
+  --push .
 ```
 
 ### Assumptions / host requirements
 
-- Docker CLI is available in the API container.
-- Host Docker daemon is reachable (typically via `/var/run/docker.sock`).
-- KCC image is pullable by the host daemon.
+- Linux host is 64-bit (`linux/amd64` or `linux/arm64`).
+- Docker daemon is running on the host and reachable from container via `/var/run/docker.sock`.
+- Host can pull and run `ghcr.io/ciromattia/kcc:latest`.
+- API container has permissions to access the mounted Docker socket.
 
 ## Development
 
 ```bash
+set -a
+source .env
+set +a
 pip install -r requirements.txt
+PYTHONPATH=src uvicorn image_scraper.api:app --host 0.0.0.0 --port 8000 --reload
 pytest
 ruff check .
 ```

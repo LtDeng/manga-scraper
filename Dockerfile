@@ -38,9 +38,10 @@ COPY src ./src
 
 ENV PYTHONPATH=/app/src
 ENV LIBRARY_ROOT=/app/library
-ENV KCC_DOCKER_IMAGE=ciromattia/kcc:latest
-ENV KCC_EXECUTABLE=kcc-c2e
-ENV KCC_FLAGS=""
+ENV KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest
+ENV KCC_EXECUTABLE=""
+ENV KCC_DOCKER_PLATFORM=""
+ENV KCC_FLAGS="--format EPUB --nokepub --manga-style"
 
 RUN mkdir -p /app/library
 

@@ -68,6 +68,7 @@ def scrape_and_convert(req: ScrapeConvertRequest):
     try:
         convert_with_kcc(paths.chapter_images_dir, paths.epub_dir, paths.epub_filename)
     except KccError as exc:
+        logger.exception("KCC conversion failed for chapter %s: %s", paths.chapter_key, exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     if req.cleanup_images_after_epub:
