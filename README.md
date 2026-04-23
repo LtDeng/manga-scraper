@@ -124,6 +124,7 @@ docker run --rm -p 8000:8000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/library:/app/library \
   -e LIBRARY_ROOT=/app/library \
+  -e HOST_LIBRARY_ROOT=$(pwd)/library \
   -e KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest \
   -e KCC_EXECUTABLE='' \
   -e KCC_DOCKER_PLATFORM='' \
@@ -135,6 +136,28 @@ For ARM hosts (Raspberry Pi / Jetson), if KCC image architecture detection is pr
 
 ```bash
 -e KCC_DOCKER_PLATFORM=linux/arm64
+```
+
+## KCC nested Docker path mapping
+
+KCC is launched with an inner `docker run` from inside the API container. The left side of `-v host_path:container_path` is always resolved by the **host** Docker daemon, so `/app/library/...` (a container path) cannot be used directly as the source mount path.
+
+Set both variables in the API container:
+
+- `LIBRARY_ROOT=/app/library` (container path used by scraper)
+- `HOST_LIBRARY_ROOT=<host project path>/library` (matching host bind-mount source)
+
+Example Compose snippet:
+
+```yaml
+services:
+  manga_scraper:
+    environment:
+      - LIBRARY_ROOT=/app/library
+      - HOST_LIBRARY_ROOT=${HOST_LIBRARY_ROOT:-./library}
+    volumes:
+      - ./library:/app/library
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 ## Multi-arch build (recommended for server deploy)
