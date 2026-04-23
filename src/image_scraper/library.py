@@ -12,10 +12,10 @@ def compute_paths(request: ScrapeConvertRequest) -> ComputedPaths:
     series_slug = slugify(request.series_sort_name or request.series_name)
     ch_sort_key = chapter_sort_key(request.chapter_number)
     ch_slug = chapter_slug(request.chapter_title, request.chapter_number)
-    ch_key = f"{ch_sort_key}__{ch_slug}"
+    ch_key = f"{ch_slug}"
 
     series_dir = output_root / "series" / series_slug
-    epub_filename = f"{series_slug}__{ch_sort_key}__{ch_slug}.epub"
+    epub_filename = f"{series_slug}-{ch_slug}.epub"
 
     return ComputedPaths(
         output_root=output_root,
