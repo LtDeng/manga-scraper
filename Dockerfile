@@ -38,6 +38,8 @@ COPY src ./src
 
 ENV PYTHONPATH=/app/src
 ENV LIBRARY_ROOT=/app/library
+# HOST_LIBRARY_ROOT intentionally has no image default.
+# It must be injected at runtime so nested `docker run -v` mounts use host paths.
 ENV KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest
 ENV KCC_EXECUTABLE=""
 ENV KCC_DOCKER_PLATFORM=""
