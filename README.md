@@ -138,6 +138,34 @@ For ARM hosts (Raspberry Pi / Jetson), if KCC image architecture detection is pr
 -e KCC_DOCKER_PLATFORM=linux/arm64
 ```
 
+
+### Running with Docker Compose
+
+Start services:
+
+```bash
+docker compose up --build
+```
+
+`manga_scraper` must include:
+
+- `- /var/run/docker.sock:/var/run/docker.sock`
+- `- ./library:/app/library`
+- `LIBRARY_ROOT=/app/library`
+- `HOST_LIBRARY_ROOT=${PWD}/library`
+
+If your Compose environment does not populate `${PWD}`, set an absolute path explicitly in `compose.yml`, for example:
+
+```yaml
+- HOST_LIBRARY_ROOT=/home/orin/Git/manga-scraper/library
+```
+
+Quick verification after `docker compose up`:
+
+- Correct KCC inner mount log example: `-v /home/orin/Git/manga-scraper/library/...:/images`
+- Incorrect mount log example: `-v /app/library/...:/images`
+
+
 ## KCC nested Docker path mapping
 
 KCC is launched with an inner `docker run` from inside the API container. The left side of `-v host_path:container_path` is always resolved by the **host** Docker daemon, so `/app/library/...` (a container path) cannot be used directly as the source mount path.
@@ -154,7 +182,7 @@ services:
   manga_scraper:
     environment:
       - LIBRARY_ROOT=/app/library
-      - HOST_LIBRARY_ROOT=${HOST_LIBRARY_ROOT:-./library}
+      - HOST_LIBRARY_ROOT=${PWD}/library
     volumes:
       - ./library:/app/library
       - /var/run/docker.sock:/var/run/docker.sock

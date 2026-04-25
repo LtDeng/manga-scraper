@@ -26,7 +26,7 @@ services:
       - "8000:8000"
     environment:
       - LIBRARY_ROOT=/app/library
-      - HOST_LIBRARY_ROOT=${HOST_LIBRARY_ROOT:-./library}
+      - HOST_LIBRARY_ROOT=${PWD}/library
       - KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest
       - KCC_EXECUTABLE=
       - KCC_FLAGS=--format EPUB --nokepub --manga-style
