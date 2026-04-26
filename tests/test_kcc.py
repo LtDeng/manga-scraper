@@ -25,6 +25,7 @@ def test_build_kcc_command(monkeypatch):
     assert "/host/library/series/one-piece/epub:/output" in command
     assert "--profile=KPW" in command
     assert "--manga-style" in command
+    assert "--forcecolor" in command
 
 
 def test_to_host_path_translates_from_library_root(monkeypatch):
