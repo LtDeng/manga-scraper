@@ -29,8 +29,7 @@ class ImageInterceptor:
     def _save_image(self, data: bytes, mime: str) -> None:
         ext = {
             "image/jpeg": "jpg",
-            "image/png": "png",
-            "image/webp": "webp"
+            "image/png": "png"
         }[mime]
 
         filename = f"{self._counter:05}.{ext}"
