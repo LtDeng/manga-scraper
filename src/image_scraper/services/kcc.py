@@ -45,6 +45,8 @@ def build_kcc_command(images_dir: Path, output_dir: Path, *, use_entrypoint: boo
     executable = os.getenv("KCC_EXECUTABLE", "kcc-c2e").strip()
     docker_platform = os.getenv("KCC_DOCKER_PLATFORM", "").strip()
     flags = shlex.split(os.getenv("KCC_FLAGS", "--format EPUB --nokepub --manga-style"))
+    if "--forcecolor" not in flags:
+        flags.append("--forcecolor")
     resolved_images_dir = images_dir.resolve()
     resolved_output_dir = output_dir.resolve()
     host_images_dir = _to_host_path(images_dir)
