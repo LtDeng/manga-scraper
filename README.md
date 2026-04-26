@@ -19,13 +19,13 @@ Playwright-based manga scraper API that captures chapter images and converts eac
       cover/
         cover.jpg
       chapters/
-        <chapter_sort_key>__<chapter_slug>/
+        <chapter_number>/
           chapter.json
           images/
             00000.jpg
             00001.png
       epub/
-        <series_slug>__<chapter_sort_key>__<chapter_slug>.epub
+        <series_slug>_chapter_<chapter_number>.epub
 ```
 
 ## API
@@ -79,11 +79,11 @@ Serves only EPUB files from the managed library path and blocks path traversal.
 curl -X POST http://localhost:8000/scrape-and-convert \
   -H 'Content-Type: application/json' \
   -d '{
-    "target_url": "https://mangapill.com/chapters/2-11173000/one-piece-chapter-1173",
+    "target_url": "https://mangapill.com/chapters/2-11174000/one-piece-chapter-1174",
     "series_name": "One Piece",
     "series_sort_name": "one_piece",
-    "chapter_number": "1173",
-    "chapter_id": "ch-1173",
+    "chapter_number": "1174",
+    "chapter_id": "ch-1174",
     "author": "Eiichiro Oda",
     "publisher": "Shueisha",
     "language": "en",
@@ -98,13 +98,14 @@ curl -X POST http://localhost:8000/scrape-and-convert \
 {
   "status": "ok",
   "series_slug": "demo-series",
+  "chapter_label": "12.5",
   "chapter_slug": "a-new-dawn",
   "chapter_sort_key": "0012_5",
   "image_count": 42,
-  "chapter_dir": "/app/library/series/demo-series/chapters/0012_5__a-new-dawn",
-  "epub_path": "/app/library/series/demo-series/epub/demo-series__0012_5__a-new-dawn.epub",
-  "epub_filename": "demo-series__0012_5__a-new-dawn.epub",
-  "fetch_url": "/files/epub/demo-series__0012_5__a-new-dawn.epub"
+  "chapter_dir": "/app/library/series/demo-series/chapters/12.5",
+  "epub_path": "/app/library/series/demo-series/epub/demo-series_chapter_12.5.epub",
+  "epub_filename": "demo-series_chapter_12.5.epub",
+  "fetch_url": "/files/epub/demo-series_chapter_12.5.epub"
 }
 ```
 
@@ -123,6 +124,7 @@ docker run --rm -p 8000:8000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/library:/app/library \
   -e LIBRARY_ROOT=/app/library \
+  -e HOST_LIBRARY_ROOT=$(pwd)/library \
   -e KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest \
   -e KCC_EXECUTABLE='' \
   -e KCC_DOCKER_PLATFORM='' \
@@ -134,6 +136,56 @@ For ARM hosts (Raspberry Pi / Jetson), if KCC image architecture detection is pr
 
 ```bash
 -e KCC_DOCKER_PLATFORM=linux/arm64
+```
+
+
+### Running with Docker Compose
+
+Start services:
+
+```bash
+docker compose up --build
+```
+
+`manga_scraper` must include:
+
+- `- /var/run/docker.sock:/var/run/docker.sock`
+- `- ./library:/app/library`
+- `LIBRARY_ROOT=/app/library`
+- `HOST_LIBRARY_ROOT=${PWD}/library`
+
+If your Compose environment does not populate `${PWD}`, set an absolute path explicitly in `compose.yml`, for example:
+
+```yaml
+- HOST_LIBRARY_ROOT=/home/orin/Git/manga-scraper/library
+```
+
+Quick verification after `docker compose up`:
+
+- Correct KCC inner mount log example: `-v /home/orin/Git/manga-scraper/library/...:/images`
+- Incorrect mount log example: `-v /app/library/...:/images`
+
+
+## KCC nested Docker path mapping
+
+KCC is launched with an inner `docker run` from inside the API container. The left side of `-v host_path:container_path` is always resolved by the **host** Docker daemon, so `/app/library/...` (a container path) cannot be used directly as the source mount path.
+
+Set both variables in the API container:
+
+- `LIBRARY_ROOT=/app/library` (container path used by scraper)
+- `HOST_LIBRARY_ROOT=<host project path>/library` (matching host bind-mount source)
+
+Example Compose snippet:
+
+```yaml
+services:
+  manga_scraper:
+    environment:
+      - LIBRARY_ROOT=/app/library
+      - HOST_LIBRARY_ROOT=${PWD}/library
+    volumes:
+      - ./library:/app/library
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 ## Multi-arch build (recommended for server deploy)

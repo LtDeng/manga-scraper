@@ -13,6 +13,33 @@ class KccError(RuntimeError):
     pass
 
 
+def _resolve_library_roots() -> tuple[Path, Path]:
+    library_root = Path(os.getenv("LIBRARY_ROOT", "/app/library")).resolve()
+    host_library_root_raw = os.getenv("HOST_LIBRARY_ROOT", "").strip()
+    if not host_library_root_raw:
+        raise KccError(
+            "HOST_LIBRARY_ROOT is required for Dockerized KCC conversion. "
+            "Set HOST_LIBRARY_ROOT to the host path mapped to LIBRARY_ROOT "
+            "(example: -e HOST_LIBRARY_ROOT=$(pwd)/library)."
+        )
+
+    return library_root, Path(host_library_root_raw).resolve()
+
+
+def _to_host_path(path: Path) -> Path:
+    library_root, host_library_root = _resolve_library_roots()
+    resolved = path.resolve()
+    try:
+        relative_path = resolved.relative_to(library_root)
+    except ValueError as exc:
+        raise KccError(
+            f"Path '{resolved}' is outside LIBRARY_ROOT '{library_root}'. "
+            "Only files under LIBRARY_ROOT can be mounted into the KCC container."
+        ) from exc
+
+    return host_library_root / relative_path
+
+
 def build_kcc_command(images_dir: Path, output_dir: Path, *, use_entrypoint: bool = True) -> list[str]:
     logger.info("images_dir=%s", images_dir)
     logger.info("images_dir.resolve()=%s", images_dir.resolve())
@@ -21,6 +48,12 @@ def build_kcc_command(images_dir: Path, output_dir: Path, *, use_entrypoint: boo
     executable = os.getenv("KCC_EXECUTABLE", "kcc-c2e").strip()
     docker_platform = os.getenv("KCC_DOCKER_PLATFORM", "").strip()
     flags = shlex.split(os.getenv("KCC_FLAGS", "--format EPUB --nokepub --manga-style"))
+    if "--forcecolor" not in flags:
+        flags.append("--forcecolor")
+    resolved_images_dir = images_dir.resolve()
+    resolved_output_dir = output_dir.resolve()
+    host_images_dir = _to_host_path(images_dir)
+    host_output_dir = _to_host_path(output_dir)
 
     command = [
         "docker",
@@ -33,11 +66,11 @@ def build_kcc_command(images_dir: Path, output_dir: Path, *, use_entrypoint: boo
 
     command.extend(
         [
-        "-v",
-        # KCC may create temporary working files while preparing source images.
-        f"{images_dir.resolve()}:/images",
-        "-v",
-        f"{output_dir.resolve()}:/output",
+            "-v",
+            # KCC may create temporary working files while preparing source images.
+            f"{host_images_dir}:/images",
+            "-v",
+            f"{host_output_dir}:/output",
         ]
     )
 
@@ -55,6 +88,14 @@ def build_kcc_command(images_dir: Path, output_dir: Path, *, use_entrypoint: boo
             *flags,
         ]
     )
+
+    logger.debug("KCC images_dir=%s", images_dir)
+    logger.debug("KCC images_dir.resolve()=%s", resolved_images_dir)
+    logger.debug("KCC translated host images dir=%s", host_images_dir)
+    logger.debug("KCC output_dir=%s", output_dir)
+    logger.debug("KCC output_dir.resolve()=%s", resolved_output_dir)
+    logger.debug("KCC translated host output dir=%s", host_output_dir)
+    logger.debug("KCC docker command=%s", " ".join(command))
     return command
 
 

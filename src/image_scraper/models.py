@@ -39,6 +39,7 @@ class ScrapeConvertRequest(BaseModel):
 class ScrapeConvertResponse(BaseModel):
     status: str
     series_slug: str
+    chapter_label: str
     chapter_slug: str
     chapter_sort_key: str
     image_count: int
@@ -63,6 +64,7 @@ class SeriesMetadata(BaseModel):
 
 class ChapterMetadata(BaseModel):
     chapter_number: str
+    chapter_label: str
     chapter_title: str | None = None
     chapter_id: str | None = None
     volume: str | None = None
@@ -78,6 +80,7 @@ class ChapterMetadata(BaseModel):
 class ComputedPaths(BaseModel):
     output_root: Path
     series_slug: str
+    chapter_label: str
     chapter_slug: str
     chapter_sort_key: str
     chapter_key: str

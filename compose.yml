@@ -25,14 +25,15 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - LIBRARY_ROOT=/app/output
+      - LIBRARY_ROOT=/app/library
+      - HOST_LIBRARY_ROOT=${PWD}/library
       - KCC_DOCKER_IMAGE=ghcr.io/ciromattia/kcc:latest
       - KCC_EXECUTABLE=
       - KCC_FLAGS=--format EPUB --nokepub --manga-style
       # For Raspberry Pi / Jetson if needed:
       # - KCC_DOCKER_PLATFORM=linux/arm64
     volumes:
-      - ./output:/app/output
+      - ./library:/app/library
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 

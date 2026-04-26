@@ -4,22 +4,24 @@ import json
 from pathlib import Path
 
 from image_scraper.models import ChapterMetadata, ComputedPaths, ScrapeConvertRequest, SeriesMetadata
-from image_scraper.naming import chapter_slug, chapter_sort_key, slugify
+from image_scraper.naming import chapter_number_label, chapter_slug, chapter_sort_key, slugify
 
 
 def compute_paths(request: ScrapeConvertRequest) -> ComputedPaths:
     output_root = Path(request.output_root).resolve()
     series_slug = slugify(request.series_sort_name or request.series_name)
+    chapter_label = chapter_number_label(request.chapter_number)
     ch_sort_key = chapter_sort_key(request.chapter_number)
     ch_slug = chapter_slug(request.chapter_title, request.chapter_number)
-    ch_key = f"{ch_slug}"
+    ch_key = chapter_label
 
     series_dir = output_root / "series" / series_slug
-    epub_filename = f"{series_slug}-{ch_slug}.epub"
+    epub_filename = f"{series_slug}_chapter_{chapter_label}.epub"
 
     return ComputedPaths(
         output_root=output_root,
         series_slug=series_slug,
+        chapter_label=chapter_label,
         chapter_slug=ch_slug,
         chapter_sort_key=ch_sort_key,
         chapter_key=ch_key,
@@ -64,11 +66,12 @@ def write_series_metadata(request: ScrapeConvertRequest, paths: ComputedPaths, c
 
 def write_chapter_metadata(request: ScrapeConvertRequest, paths: ComputedPaths, image_count: int) -> None:
     metadata = ChapterMetadata(
-        chapter_number=str(request.chapter_number),
+        chapter_number=paths.chapter_label,
         chapter_title=request.chapter_title,
         chapter_id=request.chapter_id,
         volume=request.volume,
         target_url=str(request.target_url),
+        chapter_label=paths.chapter_label,
         chapter_slug=paths.chapter_slug,
         chapter_sort_key=paths.chapter_sort_key,
         chapter_key=paths.chapter_key,

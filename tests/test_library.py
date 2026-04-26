@@ -15,4 +15,5 @@ def test_compute_paths_is_deterministic():
     second = compute_paths(req)
 
     assert first.chapter_dir == second.chapter_dir
-    assert first.epub_filename == "one-piece__0012_5__a-new-dawn.epub"
+    assert first.chapter_dir.name == "12.5"
+    assert first.epub_filename == "one-piece_chapter_12.5.epub"
