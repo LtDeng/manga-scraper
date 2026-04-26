@@ -41,6 +41,9 @@ def _to_host_path(path: Path) -> Path:
 
 
 def build_kcc_command(images_dir: Path, output_dir: Path, *, use_entrypoint: bool = True) -> list[str]:
+    logger.info("images_dir=%s", images_dir)
+    logger.info("images_dir.resolve()=%s", images_dir.resolve())
+    logger.info("output_dir.resolve()=%s", output_dir.resolve())
     docker_image = os.getenv("KCC_DOCKER_IMAGE", "ghcr.io/ciromattia/kcc:latest")
     executable = os.getenv("KCC_EXECUTABLE", "kcc-c2e").strip()
     docker_platform = os.getenv("KCC_DOCKER_PLATFORM", "").strip()
